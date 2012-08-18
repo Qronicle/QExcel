@@ -1,15 +1,22 @@
 #QExcel
 
-Experimental extension of PHPExcel (http://phpexcel.codeplex.com/) that will hopefully use less resources by only looking at the actual content, ignoring styles etc.
+The Qronicle (or Quick - whatever) Excel library is an experimental Excel reader based on PHPExcel (http://phpexcel.codeplex.com/). Hopefully it will use less resources by only looking at the actual content, ignoring styles etc.
+
+This library should be helpful when importing excel files where the styling is not important. This library will only ever contain the Excel readers.
 
 ## Progress
 
-I currently stripped both the Excel2007 and Excel5 Readers. After CSV and Excel2003XML Readers I'll work on stripping the total package and putting the contents up on GitHub.
+Currently the Excel5, Excel2003XML, Excel2007 and CSV Readers are mostly ready. 
+The IOFactory needs a rewrite and a more unified configuration system (per reader) should be built.
+
+For the moment the indiviual readers seem to work well, but note I didn't test a lot of different files per reader.
 
 ## Performance
 
 Tested with a file containing 2400 lines and 22 columns (mostly text and number fields).
 PHPExcel used setReadDataOnly as true.
+
+Note that these are quickly made tests and that they are just an indication of the amount of memory and time that is won by ignoring the (for this library) unimportant data.
 
 ### Excel2007 Reader
 
@@ -102,6 +109,3 @@ PHPExcel used setReadDataOnly as true.
 		<td>36.8% (5 times faster)</td>
 	</tr>
 </table>
-
-Memory usage	1.73 MB
-Total time	0.11 seconds

@@ -10,7 +10,7 @@
  */
 
 /**
- * Workbook.php
+ * Workbook
  *
  * @package     QExcel
  * @copyright   2012 Qronicle (http://www.qronicle.be)

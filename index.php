@@ -3,30 +3,29 @@
 require_once('common.php');
 require_once('library/QExcel/QExcel.php');
 
-switch (3)
+switch (1)
 {
     case 1:
         $excelFile = WEB_DIR . '/test/files/example1.xlsx';
-        $reader = new QExcel_Reader_Excel2007();
+        $readerType = 'Excel2007';
         break;
 
     case 2:
         $excelFile = WEB_DIR . '/test/files/example2.xls';
-        $reader = new QExcel_Reader_Excel5();
+        $readerType = 'Excel5';
         break;
 
     case 3:
         $excelFile = WEB_DIR . '/test/files/export.csv';
-        $reader = new QExcel_Reader_CSV();
+        $readerType = 'CSV';
         break;
 
     case 0:
     default:
         $excelFile = WEB_DIR . '/test/files/example2.xml';
-        $reader = new QExcel_Reader_Excel2003XML();
+        $readerType = 'Excel2003XML';
 }
 
+$workbook = QExcel::loadWorkbook($excelFile/*, $readerType*/);
 
-
-$workbook = $reader->load($excelFile);
 tdump('Workbook', $workbook);

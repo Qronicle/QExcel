@@ -100,12 +100,12 @@ Note that these are quickly made tests and that they are just an indication of t
 		<td>Memory usage</td>
 		<td>55.29 MB</td>
 		<td>6.31 MB</td>
-		<td>3.5% (28 times less)</td>
+		<td>11.4% (9 times less)</td>
 	</tr>
 	<tr>
 		<td>Duration</td>
 		<td>6.80 seconds</td>
 		<td>0.42 seconds</td>
-		<td>36.8% (5 times faster)</td>
+		<td>6.1% (16 times faster)</td>
 	</tr>
 </table>

@@ -6,10 +6,23 @@ This library should be helpful when importing excel files where the styling is n
 
 ## Progress
 
-Currently the Excel5, Excel2003XML, Excel2007 and CSV Readers are mostly ready. 
-The IOFactory needs a rewrite and a more unified configuration system (per reader) should be built.
+Basic functionality is all in place. The optimized Excel5, Excel2003XML, Excel2007 and CSV Readers are mostly ready. Everything is tied together by the QExcel class (that can be used as a replacement to PHPExcel's IO factory.
 
-For the moment the indiviual readers seem to work well, but note I didn't test a lot of different files per reader.
+Up next is the options system for each of the readers. The Workbook and Worksheet classes will get some additions. More documentation will be added. Later I might add the other PHPExcel readers (like OO format).
+
+## Getting started
+
+```php
+// Always include the QExcel file
+// This will start the autoloader and you will probably use the QExcel class to start as well
+require_once('library/QExcel/QExcel.php');
+
+// The workbook file
+$filename = 'files/test.xls';
+
+// Load the file into a QExcel_Workbook object
+$workbook = QExcel::loadWorkbook($filename);
+```
 
 ## Performance
 

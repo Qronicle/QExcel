@@ -22,6 +22,13 @@
  */
 class QExcel_Reader_Excel2007 extends QExcel_Reader_ReaderAbstract
 {
+    public function _init()
+    {
+        $this->_defaultOptions = array(
+            'loadSheet' => null,
+        );
+    }
+
     /**
      * Can the Excel 2003 Reader open the file?
      *
@@ -66,72 +73,25 @@ class QExcel_Reader_Excel2007 extends QExcel_Reader_ReaderAbstract
 	}
 
 
-	protected static function _castToBool($c)
-    {
-//		echo 'Initial Cast to Boolean<br />';
-		$value = isset($c->v) ? (string) $c->v : null;
-		if ($value == '0') {
-			return false;
-		} elseif ($value == '1') {
-			return true;
-		} else {
-			return (bool)$c->v;
-		}
-		return $value;
-	}	//	function _castToBool()
-
-
-	protected static function _castToError($c)
-    {
-//		echo 'Initial Cast to Error<br />';
-		return isset($c->v) ? (string) $c->v : null;;
-	}	//	function _castToError()
-
-
-	protected static function _castToString($c)
-    {
-//		echo 'Initial Cast to String<br />';
-		return isset($c->v) ? (string) $c->v : null;;
-	}	//	function _castToString()
-
-
-	public function _getFromZipArchive(ZipArchive $archive, $fileName = '')
-	{
-		// Root-relative paths
-		if (strpos($fileName, '//') !== false)
-		{
-			$fileName = substr($fileName, strpos($fileName, '//') + 1);
-		}
-		$fileName = PHPExcel_Shared_File::realpath($fileName);
-
-		// Apache POI fixes
-		$contents = $archive->getFromName($fileName);
-		if ($contents === false)
-		{
-			$contents = $archive->getFromName(substr($fileName, 1));
-		}
-
-		return $contents;
-	}
-
-
-	/**
-	 * Reads names of the worksheets from a file, without parsing the whole file to a PHPExcel object
-	 *
-	 * @param 	string 		$pFilename
-	 * @throws 	Exception
-	 */
-	public function listWorksheetNames($pFilename)
+    /**
+     * Get the sheet names of a workbook
+     *
+     * @abstract
+     * @param string $filename  The file that should be loaded
+     * @return array
+     * @throws Exception
+     */
+	public function getSheetNames($filename)
 	{
 		// Check if file exists
-		if (!file_exists($pFilename)) {
-			throw new Exception("Could not open " . $pFilename . " for reading! File does not exist.");
+		if (!file_exists($filename)) {
+			throw new Exception("Could not open " . $filename . " for reading! File does not exist.");
 		}
 
 		$worksheetNames = array();
 
 		$zip = new ZipArchive;
-		$zip->open($pFilename);
+		$zip->open($filename);
 
 		$rels = simplexml_load_string($this->_getFromZipArchive($zip, "_rels/.rels")); //~ http://schemas.openxmlformats.org/package/2006/relationships");
 		foreach ($rels->Relationship as $rel) {
@@ -233,7 +193,7 @@ class QExcel_Reader_Excel2007 extends QExcel_Reader_ReaderAbstract
                             $sheetName = (string) $eleSheet["name"];
 
 							// Check if sheet should be skipped
-							if (isset($this->_loadSheetsOnly) && !in_array($sheetName, $this->_loadSheetsOnly)) {
+							if ($this->getLoadSheetsOnly() && !in_array($sheetName, $this->getLoadSheetsOnly())) {
 								continue;
 							}
 
@@ -342,6 +302,57 @@ class QExcel_Reader_Excel2007 extends QExcel_Reader_ReaderAbstract
 
 		return $this->_workbook;
 	}
+
+
+
+
+    protected static function _castToBool($c)
+    {
+//		echo 'Initial Cast to Boolean<br />';
+        $value = isset($c->v) ? (string) $c->v : null;
+        if ($value == '0') {
+            return false;
+        } elseif ($value == '1') {
+            return true;
+        } else {
+            return (bool)$c->v;
+        }
+        return $value;
+    }	//	function _castToBool()
+
+
+    protected static function _castToError($c)
+    {
+//		echo 'Initial Cast to Error<br />';
+        return isset($c->v) ? (string) $c->v : null;;
+    }	//	function _castToError()
+
+
+    protected static function _castToString($c)
+    {
+//		echo 'Initial Cast to String<br />';
+        return isset($c->v) ? (string) $c->v : null;;
+    }	//	function _castToString()
+
+
+    public function _getFromZipArchive(ZipArchive $archive, $fileName = '')
+    {
+        // Root-relative paths
+        if (strpos($fileName, '//') !== false)
+        {
+            $fileName = substr($fileName, strpos($fileName, '//') + 1);
+        }
+        $fileName = PHPExcel_Shared_File::realpath($fileName);
+
+        // Apache POI fixes
+        $contents = $archive->getFromName($fileName);
+        if ($contents === false)
+        {
+            $contents = $archive->getFromName(substr($fileName, 1));
+        }
+
+        return $contents;
+    }
 
 	protected function _parseRichText($is = null)
     {

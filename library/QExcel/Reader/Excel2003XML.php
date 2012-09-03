@@ -25,6 +25,13 @@ class QExcel_Reader_Excel2003XML extends QExcel_Reader_ReaderAbstract
 {
     protected $_charSet = 'UTF-8';
 
+    public function _init()
+    {
+        $this->_defaultOptions = array(
+            'loadSheet' => null,
+        );
+    }
+
     /**
      * Can the Excel 2003 XML Reader open the file?
      *
@@ -79,25 +86,27 @@ class QExcel_Reader_Excel2003XML extends QExcel_Reader_ReaderAbstract
 	}
 
 
-	/**
-	 * Reads names of the worksheets from a file, without parsing the whole file to a PHPExcel object
-	 *
-	 * @param 	string 		$pFilename
-	 * @throws 	Exception
-	 */
-	public function listWorksheetNames($pFilename)
+    /**
+     * Get the sheet names of a workbook
+     *
+     * @abstract
+     * @param string $filename  The file that should be loaded
+     * @return array
+     * @throws Exception
+     */
+	public function getSheetNames($filename)
 	{
 		// Check if file exists
-		if (!file_exists($pFilename)) {
-			throw new Exception("Could not open " . $pFilename . " for reading! File does not exist.");
+		if (!file_exists($filename)) {
+			throw new Exception("Could not open " . $filename . " for reading! File does not exist.");
 		}
-		if (!$this->canRead($pFilename)) {
-			throw new Exception($pFilename . " is an Invalid Spreadsheet file.");
+		if (!$this->canRead($filename)) {
+			throw new Exception($filename . " is an Invalid Spreadsheet file.");
 		}
 
 		$worksheetNames = array();
 
-		$xml = simplexml_load_file($pFilename);
+		$xml = simplexml_load_file($filename);
 		$namespaces = $xml->getNamespaces(true);
 
 		$xml_ss = $xml->children($namespaces['ss']);
@@ -108,50 +117,6 @@ class QExcel_Reader_Excel2003XML extends QExcel_Reader_ReaderAbstract
 
 		return $worksheetNames;
 	}
-
-	protected static function identifyFixedStyleValue($styleList,&$styleAttributeValue) {
-		$styleAttributeValue = strtolower($styleAttributeValue);
-		foreach($styleList as $style) {
-			if ($styleAttributeValue == strtolower($style)) {
-				$styleAttributeValue = $style;
-				return true;
-			}
-		}
-		return false;
-	}
-
-
- 	/**
- 	 * pixel units to excel width units(units of 1/256th of a character width)
- 	 * @param pxs
- 	 * @return
- 	 */
- 	protected static function _pixel2WidthUnits($pxs) {
-		$UNIT_OFFSET_MAP = array(0, 36, 73, 109, 146, 182, 219);
-
-		$widthUnits = 256 * ($pxs / 7);
-		$widthUnits += $UNIT_OFFSET_MAP[($pxs % 7)];
-		return $widthUnits;
-	}
-
-
-	/**
-	 * excel width units(units of 1/256th of a character width) to pixel units
-	 * @param widthUnits
-	 * @return
-	 */
-	protected static function _widthUnits2Pixel($widthUnits) {
-		$pixels = ($widthUnits / 256) * 7;
-		$offsetWidthUnits = $widthUnits % 256;
-		$pixels += round($offsetWidthUnits / (256 / 7));
-		return $pixels;
-	}
-
-
-	protected static function _hex2str($hex) {
-		return chr(hexdec($hex[1]));
-	}
-
 
     /**
      * Load workbook
@@ -186,8 +151,8 @@ class QExcel_Reader_Excel2003XML extends QExcel_Reader_ReaderAbstract
             }
 
             // Skip worksheet when not in loadSheetsOnly
-			if ((isset($this->_loadSheetsOnly)) && (isset($worksheet_ss['Name'])) &&
-				(!in_array($worksheet_ss['Name'], $this->_loadSheetsOnly))) {
+			if (($this->getLoadSheetsOnly()) && (isset($worksheet_ss['Name'])) &&
+				(!in_array($worksheet_ss['Name'], $this->getLoadSheetsOnly()))) {
 				continue;
 			}
 
@@ -252,6 +217,49 @@ class QExcel_Reader_Excel2003XML extends QExcel_Reader_ReaderAbstract
 		return $this->_workbook;
 	}
 
+
+    protected static function identifyFixedStyleValue($styleList,&$styleAttributeValue) {
+        $styleAttributeValue = strtolower($styleAttributeValue);
+        foreach($styleList as $style) {
+            if ($styleAttributeValue == strtolower($style)) {
+                $styleAttributeValue = $style;
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * pixel units to excel width units(units of 1/256th of a character width)
+     * @param pxs
+     * @return
+     */
+    protected static function _pixel2WidthUnits($pxs) {
+        $UNIT_OFFSET_MAP = array(0, 36, 73, 109, 146, 182, 219);
+
+        $widthUnits = 256 * ($pxs / 7);
+        $widthUnits += $UNIT_OFFSET_MAP[($pxs % 7)];
+        return $widthUnits;
+    }
+
+
+    /**
+     * excel width units(units of 1/256th of a character width) to pixel units
+     * @param widthUnits
+     * @return
+     */
+    protected static function _widthUnits2Pixel($widthUnits) {
+        $pixels = ($widthUnits / 256) * 7;
+        $offsetWidthUnits = $widthUnits % 256;
+        $pixels += round($offsetWidthUnits / (256 / 7));
+        return $pixels;
+    }
+
+
+    protected static function _hex2str($hex) {
+        return chr(hexdec($hex[1]));
+    }
 
 	protected static function _convertStringEncoding($string,$charset) {
 		if ($charset != 'UTF-8') {

@@ -12,7 +12,15 @@
 
 
 /**
- * Excel 2003 XML Reader
+ * CSV Reader
+ *
+ * <b>Options</b>
+ * <ul>
+ *  <li><i>encoding</i><br/>The input file's encoding (eg. 'UTF-8', 'UTF-16LE', 'UTF-16BE', 'UTF-32LE'). Will use iconv/mbstring for conversion<br/>Default: 'UTF-8'</li>
+ *  <li><i>delimiter</i><br/>The CSV delimiter (eg. ';', ',', '\t').<br/>Default: null (auto-detect)</li>
+ *  <li><i>possibleDelimiters</i><br/>The delimiters that will be tried when auto-detetecting the CSV delimiter<br/>Default: [';', ',', '\t']</li>
+ *  <li><i>enclosure</i>The CSV enclosure character (eg '"').<br/>Default: '"'</li>
+ * </ul>
  *
  * @package     QExcel_Reader
  * @copyright   2012 Qronicle (http://www.qronicle.be)
@@ -23,39 +31,19 @@
  */
 class QExcel_Reader_CSV extends QExcel_Reader_ReaderAbstract
 {
-	/**
-	 * Input encoding
-	 *
-	 * @access	private
-	 * @var	string
-	 */
-	private $_inputEncoding	= '';
-
-	/**
-	 * Delimiter
-     *
-     * null = auto
-	 *
-	 * @access	private
-	 * @var string
-	 */
-	private $_delimiter		= null;
-
-	/**
-	 * Enclosure
-	 *
-	 * @access	private
-	 * @var	string
-	 */
-	private $_enclosure		= '"';
-
-	/**
-	 * Line ending
-	 *
-	 * @access	private
-	 * @var	string
-	 */
-	private $_lineEnding	= PHP_EOL;
+    /**
+     * Initialize default options
+     */
+    public function _init()
+    {
+        $this->_defaultOptions = array(
+            'encoding'           => 'UTF-8',
+            'delimiter'          => null,
+            'possibleDelimiters' => array(',', ';', "\t"),
+            'enclosure'          => '"',
+//          'lineEnding'         => PHP_EOL,
+        );
+    }
 
     /**
      * Can the CSV Reader open the file?
@@ -72,31 +60,25 @@ class QExcel_Reader_CSV extends QExcel_Reader_ReaderAbstract
 		}
 
 		return true;
-	}	//	function canRead()
+	}
 
-	/**
-	 * Set input encoding
-	 *
-	 * @access	public
-	 * @param string $pValue Input encoding
-	 */
-	public function setInputEncoding($pValue = 'UTF-8')
-	{
-		$this->_inputEncoding = $pValue;
-		return $this;
-	}	//	function setInputEncoding()
+    /**
+     * Get the sheet names of a workbook
+     *
+     * @abstract
+     * @param string $filename  The file that should be loaded
+     * @return array
+     * @throws Exception
+     */
+    public function getSheetNames($filename)
+    {
+        // Check if file exists
+        if (!file_exists($filename)) {
+            throw new Exception("Could not open " . $filename . " for reading! File does not exist.");
+        }
 
-
-	/**
-	 * Get input encoding
-	 *
-	 * @access	public
-	 * @return string
-	 */
-	public function getInputEncoding()
-	{
-		return $this->_inputEncoding;
-	}	//	function getInputEncoding()
+        return array('Sheet 1');
+    }
 
 
     /**
@@ -108,97 +90,104 @@ class QExcel_Reader_CSV extends QExcel_Reader_ReaderAbstract
      * @return QExcel_Workbook  The loaded workbook
      * @throws Exception        Invalid file
      */
-	public function load($filename)
-	{
-		// Check if file exists
-		if (!file_exists($filename)) {
-			throw new Exception("Could not open " . $filename . " for reading! File does not exist.");
-		}
+    public function load($filename)
+    {
+        // Check if file exists
+        if (!file_exists($filename)) {
+            throw new Exception("Could not open " . $filename . " for reading! File does not exist.");
+        }
 
-        if (!$this->_delimiter) {
+        if (!$this->getOption('delimiter')) {
             $this->detectDelimiter($filename);
         }
 
         $sheet = $this->_workbook->addSheet('Sheet 1');
-        $sheet->active = true;
 
-		$lineEnding = ini_get('auto_detect_line_endings');
-		ini_set('auto_detect_line_endings', true);
+        $lineEnding = ini_get('auto_detect_line_endings');
+        ini_set('auto_detect_line_endings', true);
 
-		// Open file
-		$fileHandle = fopen($filename, 'r');
-		if ($fileHandle === false) {
-			throw new Exception("Could not open file $filename for reading.");
-		}
+        // Open file
+        $fileHandle = fopen($filename, 'r');
+        if ($fileHandle === false) {
+            throw new Exception("Could not open file $filename for reading.");
+        }
 
-		// Skip BOM, if any
-		switch ($this->_inputEncoding) {
-			case 'UTF-8':
-				fgets($fileHandle, 4) == "\xEF\xBB\xBF" ?
-					fseek($fileHandle, 3) : fseek($fileHandle, 0);
-				break;
-			case 'UTF-16LE':
-				fgets($fileHandle, 3) == "\xFF\xFE" ?
-					fseek($fileHandle, 2) : fseek($fileHandle, 0);
-				break;
-			case 'UTF-16BE':
-				fgets($fileHandle, 3) == "\xFE\xFF" ?
-					fseek($fileHandle, 2) : fseek($fileHandle, 0);
-				break;
-			case 'UTF-32LE':
-				fgets($fileHandle, 5) == "\xFF\xFE\x00\x00" ?
-					fseek($fileHandle, 4) : fseek($fileHandle, 0);
-				break;
-			case 'UTF-32BE':
-				fgets($fileHandle, 5) == "\x00\x00\xFE\xFF" ?
-					fseek($fileHandle, 4) : fseek($fileHandle, 0);
-				break;
-			default:
-				break;
-		}
+        // Skip BOM, if any
+        switch ($this->getOption('encoding')) {
+            case 'UTF-8':
+                fgets($fileHandle, 4) == "\xEF\xBB\xBF" ?
+                    fseek($fileHandle, 3) : fseek($fileHandle, 0);
+                break;
+            case 'UTF-16LE':
+                fgets($fileHandle, 3) == "\xFF\xFE" ?
+                    fseek($fileHandle, 2) : fseek($fileHandle, 0);
+                break;
+            case 'UTF-16BE':
+                fgets($fileHandle, 3) == "\xFE\xFF" ?
+                    fseek($fileHandle, 2) : fseek($fileHandle, 0);
+                break;
+            case 'UTF-32LE':
+                fgets($fileHandle, 5) == "\xFF\xFE\x00\x00" ?
+                    fseek($fileHandle, 4) : fseek($fileHandle, 0);
+                break;
+            case 'UTF-32BE':
+                fgets($fileHandle, 5) == "\x00\x00\xFE\xFF" ?
+                    fseek($fileHandle, 4) : fseek($fileHandle, 0);
+                break;
+            default:
+                break;
+        }
 
-		$escapeEnclosures = array( "\\" . $this->_enclosure,
-								   $this->_enclosure . $this->_enclosure
-								 );
+        $escapeEnclosures = array( "\\" . $this->getOption('enclosure'),
+            $this->getOption('enclosure') . $this->getOption('enclosure')
+        );
 
-		// Loop through each line of the file in turn
+        // Loop through each line of the file in turn
         $row = 0;
-		while (($rowData = fgetcsv($fileHandle, 0, $this->_delimiter, $this->_enclosure)) !== FALSE) {
+        while (($rowData = fgetcsv($fileHandle, 0, $this->getOption('delimiter'), $this->getOption('enclosure'))) !== FALSE) {
             $column = 0;
-			foreach($rowData as $rowDatum) {
-				if ($rowDatum != '') {
-					// Unescape enclosures
-					$rowDatum = str_replace($escapeEnclosures, $this->_enclosure, $rowDatum);
+            foreach($rowData as $rowDatum) {
+                if ($rowDatum != '') {
+                    // Unescape enclosures
+                    $rowDatum = str_replace($escapeEnclosures, $this->getOption('enclosure'), $rowDatum);
 
-					// Convert encoding if necessary
-					if ($this->_inputEncoding !== 'UTF-8') {
-						$rowDatum = PHPExcel_Shared_String::ConvertEncoding($rowDatum, 'UTF-8', $this->_inputEncoding);
-					}
+                    // Convert encoding if necessary
+                    if ($this->getOption('encoding') !== 'UTF-8') {
+                        $rowDatum = PHPExcel_Shared_String::ConvertEncoding($rowDatum, 'UTF-8', $this->getOption('encoding'));
+                    }
 
                     $sheet->setCell($row, $column, $rowDatum);
-				}
+                }
                 $column++;
-			}
+            }
             $row++;
-		}
+        }
 
-		// Close file
-		fclose($fileHandle);
-		ini_set('auto_detect_line_endings', $lineEnding);
+        // Close file
+        fclose($fileHandle);
+        ini_set('auto_detect_line_endings', $lineEnding);
 
-		return $this->_workbook;
+        return $this->_workbook;
     }
 
+    /**
+     * Detect the file's delimiter
+     *
+     * The delimiter option will be set after invoking this method
+     * Could use some testing :)
+     *
+     * @param string $filename
+     */
     public function detectDelimiter($filename)
     {
-        $possibleDelimiters = array(',', ';', "\t");
+        $possibleDelimiters = $this->getOption('possibleDelimiters');
         $fileContent = substr(file_get_contents($filename), 0, 5000);
         $mostWithEnclosureDelimiter = null;
         $mostWithoutEnclosureDelimiter = null;
         $mostWithEnclosure = -1;
         $mostWithoutEnclosure = -1;
         foreach ($possibleDelimiters as $delimiter) {
-            $withEnclosure = substr_count($fileContent, $delimiter.$this->_enclosure);
+            $withEnclosure = substr_count($fileContent, $delimiter . $this->getOption('enclosure'));
             $withoutEnclosure = substr_count($fileContent, $delimiter);
             if ($withEnclosure > $mostWithEnclosure) {
                 $mostWithEnclosure = $withEnclosure;
@@ -210,84 +199,11 @@ class QExcel_Reader_CSV extends QExcel_Reader_ReaderAbstract
             }
         }
         if ($mostWithEnclosure) {
-            $this->setDelimiter($mostWithEnclosureDelimiter);
+            $this->setOption('delimiter', $mostWithEnclosureDelimiter);
+        } elseif ($mostWithoutEnclosure) {
+            $this->setOption('delimiter', $mostWithoutEnclosureDelimiter);
         } else {
-            $this->setDelimiter($mostWithoutEnclosureDelimiter);
+            $this->setOption('delimiter', ';');
         }
     }
-
-
-	/**
-	 * Get delimiter
-	 *
-	 * @access	public
-	 * @return string
-	 */
-	public function getDelimiter() {
-		return $this->_delimiter;
-	}	//	function getDelimiter()
-
-
-	/**
-	 * Set delimiter
-	 *
-	 * @access	public
-	 * @param	string	$pValue		Delimiter, defaults to ,
-	 * @return	PHPExcel_Reader_CSV
-	 */
-	public function setDelimiter($pValue = ',') {
-		$this->_delimiter = $pValue;
-		return $this;
-	}	//	function setDelimiter()
-
-
-	/**
-	 * Get enclosure
-	 *
-	 * @access	public
-	 * @return string
-	 */
-	public function getEnclosure() {
-		return $this->_enclosure;
-	}	//	function getEnclosure()
-
-
-	/**
-	 * Set enclosure
-	 *
-	 * @access	public
-	 * @param	string	$pValue		Enclosure, defaults to "
-	 * @return PHPExcel_Reader_CSV
-	 */
-	public function setEnclosure($pValue = '"') {
-		if ($pValue == '') {
-			$pValue = '"';
-		}
-		$this->_enclosure = $pValue;
-		return $this;
-	}	//	function setEnclosure()
-
-
-	/**
-	 * Get line ending
-	 *
-	 * @access	public
-	 * @return string
-	 */
-	public function getLineEnding() {
-		return $this->_lineEnding;
-	}	//	function getLineEnding()
-
-
-	/**
-	 * Set line ending
-	 *
-	 * @access	public
-	 * @param	string	$pValue		Line ending, defaults to OS line ending (PHP_EOL)
-	 * @return PHPExcel_Reader_CSV
-	 */
-	public function setLineEnding($pValue = PHP_EOL) {
-		$this->_lineEnding = $pValue;
-		return $this;
-	}	//	function setLineEnding()
 }

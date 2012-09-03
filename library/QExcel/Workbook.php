@@ -39,7 +39,28 @@ class QExcel_Workbook
     }
 
     /**
+     * Get worksheet
+     *
+     * @param string|int $sheet     The sheet name or index
+     * @return QExcel_Worksheet     The demanded worksheet. NULL in case there was none.
+     */
+    public function getSheet($sheetName)
+    {
+        if (is_numeric($sheetName)) {
+            return isset($this->_sheets[$sheetName]) ? $this->_sheets[$sheetName] : null;
+        }
+        foreach ($this->_sheets as $sheet) {
+            if ($sheet->name == $sheetName) {
+                return $sheet;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Add worksheet
+     *
+     * This method is used internally by the readers
      *
      * @param string $name      The worksheet name - optional
      * @return QExcel_Worksheet
@@ -48,7 +69,6 @@ class QExcel_Workbook
     {
         $nSheet = new QExcel_Worksheet();
         $this->_sheets[] = $nSheet;
-        $nSheet->sheetId = count($this->_sheets);
         $nSheet->name = $name;
         return $nSheet;
     }

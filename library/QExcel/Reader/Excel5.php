@@ -241,6 +241,12 @@ class QExcel_Reader_Excel5 extends QExcel_Reader_ReaderAbstract
 	 */
 	private $_mapCellStyleXfIndex;
 
+    public function _init()
+    {
+        $this->_defaultOptions = array(
+            'loadSheet' => null,
+        );
+    }
 
     /**
      * Can the Excel 5 Reader open the file?
@@ -270,23 +276,25 @@ class QExcel_Reader_Excel5 extends QExcel_Reader_ReaderAbstract
 	}
 
 
-	/**
-	 * Reads names of the worksheets from a file, without parsing the whole file to a PHPExcel object
-	 *
-	 * @param 	string 		$pFilename
-	 * @throws 	Exception
-	 */
-	public function listWorksheetNames($pFilename)
+    /**
+     * Get the sheet names of a workbook
+     *
+     * @abstract
+     * @param string $filename  The file that should be loaded
+     * @return array
+     * @throws Exception
+     */
+	public function getSheetNames($filename)
 	{
 		// Check if file exists
-		if (!file_exists($pFilename)) {
-			throw new Exception("Could not open " . $pFilename . " for reading! File does not exist.");
+		if (!file_exists($filename)) {
+			throw new Exception("Could not open " . $filename . " for reading! File does not exist.");
 		}
 
 		$worksheetNames = array();
 
 		// Read the OLE file
-		$this->_loadOLE($pFilename);
+		$this->_loadOLE($filename);
 
 		// total byte size of Excel data (workbook global substream + sheet substreams)
 		$this->_dataSize = strlen($this->_data);
@@ -385,7 +393,7 @@ class QExcel_Reader_Excel5 extends QExcel_Reader_ReaderAbstract
 			}
 
 			// check if sheet should be skipped
-			if (isset($this->_loadSheetsOnly) && !in_array($sheet['name'], $this->_loadSheetsOnly)) {
+			if ($this->getLoadSheetsOnly() && !in_array($sheet['name'], $this->getLoadSheetsOnly())) {
 				continue;
 			}
 

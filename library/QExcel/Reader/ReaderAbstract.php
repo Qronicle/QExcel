@@ -25,6 +25,22 @@
 abstract class QExcel_Reader_ReaderAbstract
 {
     /**
+     * Custom options
+     *
+     * @var array
+     */
+    protected $_options = array();
+
+    /**
+     * Default option values
+     *
+     * This array should be initialized in the init method and contain all possible options as a key
+     *
+     * @var array
+     */
+    protected $_defaultOptions = array();
+
+    /**
      * @var QExcel_Workbook
      */
     protected $_workbook;
@@ -35,6 +51,18 @@ abstract class QExcel_Reader_ReaderAbstract
     public function __construct()
     {
         $this->_workbook = new QExcel_Workbook();
+        $this->_init();
+    }
+
+    /**
+     * Internal initialization method
+     *
+     * Use this instead of overriding the constructor,
+     * for example to set the default options
+     */
+    protected function _init()
+    {
+        // Override me
     }
 
     /**
@@ -54,6 +82,79 @@ abstract class QExcel_Reader_ReaderAbstract
      * @return QExcel_Workbook
      */
     abstract function load($filename);
+
+    /**
+     * Get the sheet names of a workbook
+     *
+     * @abstract
+     * @param string $filename  The file that should be loaded
+     * @return array
+     */
+    abstract function getSheetNames($filename);
+
+    /**
+     * Get all option names that can be set
+     *
+     * @return array
+     */
+    public function getOptions()
+    {
+        return array_keys($this->_defaultOptions);
+    }
+
+    /**
+     * Get the default options
+     *
+     * @return array
+     */
+    public function getDefaultOptions()
+    {
+        return $this->_defaultOptions;
+    }
+
+    /**
+     * Get an option value
+     *
+     * @param string $key     The option name
+     * @param null   $default The default value that should be returned in case this is not an option
+     * @return mixed          The option value
+     */
+    public function getOption($key, $default = null)
+    {
+        return array_key_exists($key, $this->_options) ?
+            $this->_options[$key] :
+            (isset($this->_defaultOptions[$key]) ? $this->_defaultOptions[$key] : $default);
+    }
+
+    /**
+     * Set an option value
+     *
+     * @param string $key   The option name
+     * @param mixed  $value The new option value
+     * @return bool         Whether the option value was set (FALSE in case option doesn't exist)
+     */
+    public function setOption($key, $value)
+    {
+        if (array_key_exists($key, $this->_defaultOptions)) {
+            $this->_options[$key] = $value;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Set multiple option values
+     *
+     * Uses setOption for each array entry
+     *
+     * @param array $options
+     */
+    public function setOptions(array $options)
+    {
+        foreach ($options as $key => $value) {
+            $this->setOption($key, $value);
+        }
+    }
 
     /**
      * Get cell value
@@ -146,20 +247,11 @@ abstract class QExcel_Reader_ReaderAbstract
             $multiplier += 26;
         }
         if (!$col) {
-            throw new Exception("Could not determine col for cell $cellName");
+            throw new Exception("Could not determine column for cell $cellName");
         }
 
         return $col - 1;
     }
-
-
-    /**
-     * Restrict which sheets should be loaded?
-     * This property holds an array of worksheet names to be loaded. If null, then all worksheets will be loaded.
-     *
-     * @var array of string
-     */
-    protected $_loadSheetsOnly = null;
 
     public function getSheets()
     {
@@ -175,36 +267,8 @@ abstract class QExcel_Reader_ReaderAbstract
      */
     public function getLoadSheetsOnly()
     {
-        return $this->_loadSheetsOnly;
-    }
-
-
-    /**
-     * Set which sheets to load
-     *
-     * @param mixed $value
-     *		This should be either an array of worksheet names to be loaded, or a string containing a single worksheet name.
-     *		If NULL, then it tells the Reader to read all worksheets in the workbook
-     *
-     * @return QExcel_Reader_Excel2007
-     */
-    public function setLoadSheetsOnly($value = null)
-    {
-        $this->_loadSheetsOnly = is_array($value) ?
-            $value : array($value);
-        return $this;
-    }
-
-
-    /**
-     * Set all sheets to load
-     *		Tells the Reader to load all worksheets from the workbook.
-     *
-     * @return QExcel_Reader_Excel2007
-     */
-    public function setLoadAllSheets()
-    {
-        $this->_loadSheetsOnly = null;
-        return $this;
+        $sheets = $this->getOption('loadSheet');
+        if (is_null($sheets)) return null;
+        return is_array($sheets) ? $sheets : array($sheets);
     }
 }

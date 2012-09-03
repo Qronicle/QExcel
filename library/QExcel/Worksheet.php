@@ -21,18 +21,99 @@
  */
 class QExcel_Worksheet
 {
-    public $sheetId = 0;
+    /**
+     * Worksheet name
+     *
+     * @var string
+     */
     public $name = '';
-    public $data = null;
-    public $active = false;
 
-    public $numCols = 0;
-    public $numRows = 0;
+    /**
+     * Worksheet data grid
+     *
+     * @var array
+     */
+    protected $_data = array();
 
+    /**
+     * Column counter
+     *
+     * @var int
+     */
+    protected $_numCols = 0;
+
+    /**
+     * Row counter
+     *
+     * @var int
+     */
+    protected $_numRows = 0;
+
+    /**
+     * Get the worksheet name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set worksheet cell value
+     *
+     * Is used internally when populating the worksheet
+     *
+     * @param int $row
+     * @param int $col
+     * @param mixed $value
+     */
     public function setCell($row, $col, $value)
     {
-        $this->numCols = max($col+1, $this->numCols);
-        $this->numRows = max($row+1, $this->numRows);
-        $this->data[$row][$col] = $value;
+        $this->_numCols = max($col+1, $this->_numCols);
+        $this->_numRows = max($row+1, $this->_numRows);
+        $this->_data[$row][$col] = $value;
+    }
+
+    /**
+     * Get the amount of columns
+     *
+     * @return int
+     */
+    public function getNumColumns()
+    {
+        return $this->_numCols;
+    }
+
+    /**
+     * Get the amount of rows
+     *
+     * @return int
+     */
+    public function getNumRows()
+    {
+        return $this->_numRows;
+    }
+
+    /**
+     * Get the value of a single cell
+     *
+     * @param int $row
+     * @param int $column
+     * @return mixed        The cell value, NULL in case the cell was not populated
+     */
+    public function getCellValue($row, $column)
+    {
+        return isset($this->_data[$row][$column]) ? $this->_data[$row][$column] : null;
+    }
+
+    /**
+     * Get all worksheet cell data
+     *
+     * @return array    array[$row][$column]
+     */
+    public function getData()
+    {
+        return $this->_data;
     }
 }

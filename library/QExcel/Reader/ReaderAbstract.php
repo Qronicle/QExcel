@@ -244,7 +244,7 @@ abstract class QExcel_Reader_ReaderAbstract
                 continue;
             }
             $col += ord($char)-64 * $multiplier;
-            $multiplier += 26;
+            $multiplier *= 26;
         }
         if (!$col) {
             throw new Exception("Could not determine column for cell $cellName");

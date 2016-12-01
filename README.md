@@ -10,6 +10,12 @@ Basic functionality is all in place. The optimized Excel5, Excel2003XML, Excel20
 
 Up next is adding more documentation, example files (the test files I use now are not open for publication) and extending the index file with more sweetness to test out. If everything works I'll probably add the OO and other Readers from PHPExcel. I also need to check for updates on the PHPExcel front, should they have improved their readers.
 
+## Composer installation
+
+```php
+composer require qronicle/qexcel
+```
+
 ## Getting started
 
 ```php

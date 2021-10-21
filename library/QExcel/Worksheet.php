@@ -116,4 +116,31 @@ class QExcel_Worksheet
     {
         return $this->_data;
     }
+
+    /**
+     * Get all worksheet cell data in an associative array
+     *
+     * @param array|null $columns
+     * @return array    array[$row][$columnTitle => $columnValue]
+     */
+    public function getAssocData($columns = null)
+    {
+        $assocData = $this->_data;
+
+        // Create columns from first row
+        if (is_null($columns)) {
+            if (!$assocData) {
+                return [];
+            }
+            $columns = array_map(function($value) {
+                return str_replace(' ', '_', mb_strtolower($value));
+            }, array_shift($assocData));
+        }
+
+        // Use columns as keys for all row data
+        foreach ($assocData as $row => $values) {
+            $assocData[$row] = array_combine($columns, $values);
+        }
+        return $assocData;
+    }
 }

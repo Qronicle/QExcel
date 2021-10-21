@@ -31,7 +31,7 @@ class QExcel_Workbook
     /**
      * Get all worksheets
      *
-     * @return array
+     * @return QExcel_Worksheet[]
      */
     public function getSheets()
     {

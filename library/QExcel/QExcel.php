@@ -154,7 +154,8 @@ class QExcel
         }
 
         // Try to load file by looking at the extension
-        $filenameExt = array_pop(explode('.', $filename));
+        $filenameParts = explode('.', $filename);
+        $filenameExt = array_pop($filenameParts);
         $ReaderTypes = self::getReaderTypes();
         foreach ($ReaderTypes as $readerType => $extensions) {
             if ($readerType == 'CSV') continue;

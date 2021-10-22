@@ -139,6 +139,14 @@ class QExcel_Worksheet
 
         // Use columns as keys for all row data
         foreach ($assocData as $row => $values) {
+            // Fix issue where empty cells are not available in the data array
+            if (count($values) != count($columns)) {
+                $newValues = [];
+                for ($i = 0; $i < count($columns); $i++) {
+                    $newValues[$i] = $values[$i] ?? '';
+                }
+                $values = $newValues;
+            }
             $assocData[$row] = array_combine($columns, $values);
         }
         return $assocData;

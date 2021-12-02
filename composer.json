@@ -10,9 +10,13 @@
             "email": "qronicle@gmail.com"
     }],
     "require": {
-        "php": ">=5.3.0"
+        "php": ">=7.1",
+        "ext-simplexml": "*",
+        "ext-zip": "*"
     },
     "autoload": {
-        "classmap": ["library/QExcel/QExcel.php"]
+        "psr-4": {
+            "QExcel\\": "src/"
+        }
     }
 }
